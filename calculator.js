@@ -323,15 +323,3 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CocCalc;
 }
-
-// Export for ES modules
-export {
-    POTION_TYPES,
-    calculatePotionCompletion,
-    calculateRequiredPotions,
-    formatDuration,
-    formatDurationFriendly,
-    formatCompletionDateTime
-};
-
-export default CocCalc;

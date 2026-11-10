@@ -1,10 +1,9 @@
 // Service Worker for Clash of Clans Potion Calculator
-const CACHE_NAME = 'coc-potion-calc-v1';
+const CACHE_NAME = 'coc-potion-calc-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
-  './calculator.js',
   './app.js',
   './manifest.json',
   './icon.svg'

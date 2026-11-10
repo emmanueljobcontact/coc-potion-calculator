@@ -1,4 +1,4 @@
-import { calculatePotionCompletion, formatDuration, formatCompletionDateTime, calculateRequiredPotions } from './calculator.js';
+const { calculatePotionCompletion, formatDuration, formatCompletionDateTime, calculateRequiredPotions } = require('./calculator.js');
 
 console.log('🧪 RUNNING COC POTION CALCULATOR TESTS...\n');
 

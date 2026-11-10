@@ -1,21 +1,293 @@
 /**
  * Clash of Clans Potion Calculator - Web Application Logic
- * Runs seamlessly both via local file:// protocol and hosted HTTP servers.
+ * Self-contained engine and reactive UI.
  */
 
-// Retrieve calculator engine from global window or fallback
-const CocEngine = (typeof window !== 'undefined' && window.CocCalc) ? window.CocCalc : {};
+// ==========================================
+// 1. CALCULATION ENGINE & DATA CONFIGURATION
+// ==========================================
 
-const {
-    POTION_TYPES = {},
-    calculatePotionCompletion,
-    calculateRequiredPotions,
-    formatDuration,
-    formatDurationFriendly,
-    formatCompletionDateTime
-} = CocEngine;
+const POTION_TYPES = {
+    builder: {
+        id: 'builder',
+        name: 'Builder Potion',
+        multiplier: 10,
+        durationSeconds: 3600, // 1 hour
+        category: 'builder',
+        icon: 'hammer',
+        color: '#3b82f6',
+        accentColor: '#60a5fa',
+        bgGradient: 'from-blue-600 to-indigo-900',
+        description: 'Boosts building construction and hero upgrades by 10x for 1 hour. Affects ALL active builders simultaneously!',
+        savingsPerHour: 9 * 3600
+    },
+    research: {
+        id: 'research',
+        name: 'Research Potion',
+        multiplier: 24,
+        durationSeconds: 3600, // 1 hour
+        category: 'lab',
+        icon: 'flask-conical',
+        color: '#06b6d4',
+        accentColor: '#22d3ee',
+        bgGradient: 'from-cyan-600 to-teal-900',
+        description: 'Boosts Laboratory research speed by 24x for 1 hour. Completes 1 full day of research in 1 hour!',
+        savingsPerHour: 23 * 3600
+    },
+    pet: {
+        id: 'pet',
+        name: 'Pet Potion',
+        multiplier: 24,
+        durationSeconds: 3600, // 1 hour
+        category: 'pet',
+        icon: 'paw-print',
+        color: '#a855f7',
+        accentColor: '#c084fc',
+        bgGradient: 'from-purple-600 to-fuchsia-950',
+        description: 'Boosts Pet House upgrade speed by 24x for 1 hour. Shaves off 23 hours of pet upgrading time.',
+        savingsPerHour: 23 * 3600
+    },
+    clock_tower: {
+        id: 'clock_tower',
+        name: 'Clock Tower Potion',
+        multiplier: 10,
+        durationSeconds: 1800, // 30 minutes
+        category: 'builder_base',
+        icon: 'clock',
+        color: '#eab308',
+        accentColor: '#facc15',
+        bgGradient: 'from-amber-600 to-yellow-950',
+        description: 'Activates the Builder Base Clock Tower boost for 30 minutes at 10x speed.',
+        savingsPerHour: 4.5 * 3600
+    },
+    custom: {
+        id: 'custom',
+        name: 'Custom Booster',
+        multiplier: 10,
+        durationSeconds: 3600,
+        category: 'custom',
+        icon: 'sliders',
+        color: '#ec4899',
+        accentColor: '#f472b6',
+        bgGradient: 'from-pink-600 to-rose-950',
+        description: 'Customize any speed multiplier and potion duration.',
+        savingsPerHour: 0
+    }
+};
 
-// Application State
+function calculatePotionCompletion({
+    upgradeSeconds,
+    potionCount = 1,
+    multiplier = 10,
+    potionDurationSeconds = 3600,
+    activeBoostSeconds = 0,
+    startTime = Date.now()
+}) {
+    const startTimestamp = typeof startTime === 'number' ? startTime : startTime.getTime();
+    
+    // Total available boosted real time
+    const totalBoostRealSeconds = Math.max(0, activeBoostSeconds) + (Math.max(0, potionCount) * Math.max(0, potionDurationSeconds));
+    
+    // Maximum upgrade progress that can be completed during the boost period
+    const maxBoostProgressSeconds = totalBoostRealSeconds * multiplier;
+    
+    let realTimeElapsedSeconds = 0;
+    let boostTimeConsumedSeconds = 0;
+    let leftoverBoostSeconds = 0;
+    let finishedDuringBoost = false;
+    let progressDuringBoostSeconds = 0;
+    let progressAtNormalSpeedSeconds = 0;
+    let unboostedRemainingSeconds = 0;
+
+    if (upgradeSeconds <= 0) {
+        return {
+            upgradeSeconds: 0,
+            realTimeElapsedSeconds: 0,
+            completionTimestamp: startTimestamp,
+            completionDate: new Date(startTimestamp),
+            timeSavedSeconds: 0,
+            finishedDuringBoost: true,
+            boostTimeConsumedSeconds: 0,
+            leftoverBoostSeconds: totalBoostRealSeconds,
+            progressDuringBoostSeconds: 0,
+            progressAtNormalSpeedSeconds: 0,
+            totalBoostRealSeconds,
+            speedMultiplier: multiplier,
+            efficiencyPercent: 0
+        };
+    }
+
+    if (totalBoostRealSeconds <= 0 || multiplier <= 1) {
+        realTimeElapsedSeconds = upgradeSeconds;
+        progressAtNormalSpeedSeconds = upgradeSeconds;
+        leftoverBoostSeconds = 0;
+        finishedDuringBoost = false;
+    } else if (upgradeSeconds <= maxBoostProgressSeconds) {
+        finishedDuringBoost = true;
+        realTimeElapsedSeconds = upgradeSeconds / multiplier;
+        boostTimeConsumedSeconds = realTimeElapsedSeconds;
+        leftoverBoostSeconds = totalBoostRealSeconds - boostTimeConsumedSeconds;
+        progressDuringBoostSeconds = upgradeSeconds;
+        progressAtNormalSpeedSeconds = 0;
+    } else {
+        finishedDuringBoost = false;
+        boostTimeConsumedSeconds = totalBoostRealSeconds;
+        leftoverBoostSeconds = 0;
+        progressDuringBoostSeconds = maxBoostProgressSeconds;
+        
+        unboostedRemainingSeconds = upgradeSeconds - maxBoostProgressSeconds;
+        progressAtNormalSpeedSeconds = unboostedRemainingSeconds;
+        
+        realTimeElapsedSeconds = totalBoostRealSeconds + unboostedRemainingSeconds;
+    }
+
+    const completionTimestamp = startTimestamp + Math.round(realTimeElapsedSeconds * 1000);
+    const timeSavedSeconds = Math.max(0, upgradeSeconds - realTimeElapsedSeconds);
+    const efficiencyPercent = upgradeSeconds > 0 ? ((timeSavedSeconds / upgradeSeconds) * 100) : 0;
+
+    return {
+        upgradeSeconds,
+        realTimeElapsedSeconds,
+        completionTimestamp,
+        completionDate: new Date(completionTimestamp),
+        timeSavedSeconds,
+        finishedDuringBoost,
+        boostTimeConsumedSeconds,
+        leftoverBoostSeconds,
+        progressDuringBoostSeconds,
+        progressAtNormalSpeedSeconds,
+        totalBoostRealSeconds,
+        speedMultiplier: multiplier,
+        efficiencyPercent: Math.min(100, Math.round(efficiencyPercent * 10) / 10),
+        timeline: [
+            {
+                phase: 'Boosted Phase',
+                speedMultiplier: multiplier,
+                realDurationSeconds: boostTimeConsumedSeconds,
+                upgradeProgressSeconds: progressDuringBoostSeconds,
+                isBoosted: true
+            },
+            ...(progressAtNormalSpeedSeconds > 0 ? [{
+                phase: 'Normal Speed Phase',
+                speedMultiplier: 1,
+                realDurationSeconds: progressAtNormalSpeedSeconds,
+                upgradeProgressSeconds: progressAtNormalSpeedSeconds,
+                isBoosted: false
+            }] : [])
+        ]
+    };
+}
+
+function calculateRequiredPotions(upgradeSeconds, potionTypeKey = 'builder', customMultiplier = 10, customDuration = 3600) {
+    const potionConfig = POTION_TYPES[potionTypeKey] || POTION_TYPES.builder;
+    const multiplier = potionTypeKey === 'custom' ? customMultiplier : potionConfig.multiplier;
+    const duration = potionTypeKey === 'custom' ? customDuration : potionConfig.durationSeconds;
+    
+    const progressPerPotion = duration * multiplier;
+    const potionsToInstantFinish = Math.max(1, Math.ceil(upgradeSeconds / progressPerPotion));
+    
+    const tiers = [];
+    const maxTiers = Math.min(10, Math.max(5, potionsToInstantFinish));
+    
+    for (let count = 1; count <= maxTiers; count++) {
+        const result = calculatePotionCompletion({
+            upgradeSeconds,
+            potionCount: count,
+            multiplier,
+            potionDurationSeconds: duration
+        });
+        
+        tiers.push({
+            potionCount: count,
+            realTimeElapsedSeconds: result.realTimeElapsedSeconds,
+            timeSavedSeconds: result.timeSavedSeconds,
+            finishedDuringBoost: result.finishedDuringBoost,
+            leftoverBoostSeconds: result.leftoverBoostSeconds
+        });
+
+        if (result.finishedDuringBoost && count >= potionsToInstantFinish) {
+            break;
+        }
+    }
+    
+    return {
+        potionConfig,
+        potionsToInstantFinish,
+        progressPerPotion,
+        tiers
+    };
+}
+
+function formatDuration(totalSeconds, includeSeconds = true) {
+    if (isNaN(totalSeconds) || totalSeconds <= 0) return '0s';
+    
+    const sec = Math.round(totalSeconds);
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (h > 0 || d > 0) parts.push(`${h}h`);
+    if (m > 0 || h > 0 || d > 0) parts.push(`${m}m`);
+    if (includeSeconds || parts.length === 0) {
+        if (s > 0 || parts.length === 0) parts.push(`${s}s`);
+    }
+    
+    return parts.join(' ');
+}
+
+function formatDurationFriendly(totalSeconds) {
+    if (isNaN(totalSeconds) || totalSeconds <= 0) return '0 mins';
+    
+    const sec = Math.round(totalSeconds);
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+
+    if (d > 0) return h > 0 ? `${d}d ${h}h` : `${d}d`;
+    if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    if (m > 0) return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    return `${s}s`;
+}
+
+function formatCompletionDateTime(date) {
+    if (!date || isNaN(date.getTime())) return 'N/A';
+    
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const isTomorrow = date.toDateString() === tomorrow.toDateString();
+    
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    if (isToday) return `Today at ${timeStr}`;
+    if (isTomorrow) return `Tomorrow at ${timeStr}`;
+    
+    const dateStr = date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    return `${dateStr} at ${timeStr}`;
+}
+
+// Expose on global window object for convenience
+if (typeof window !== 'undefined') {
+    window.CocCalc = {
+        POTION_TYPES,
+        calculatePotionCompletion,
+        calculateRequiredPotions,
+        formatDuration,
+        formatDurationFriendly,
+        formatCompletionDateTime
+    };
+}
+
+// ==========================================
+// 2. APPLICATION STATE
+// ==========================================
+
 const state = {
     selectedPotionKey: 'builder',
     days: 0,
@@ -32,8 +304,8 @@ const state = {
     soundEnabled: true,
     activeCountdownInterval: null,
     countdownTargetTimestamp: null,
+    lastCalcResult: null,
     
-    // Multi-builder Village State
     villagePotionCount: 1,
     villageSlots: [
         { id: 1, name: 'Builder 1: Town Hall / Eagle', days: 2, hours: 14, mins: 0, type: 'builder' },
@@ -47,7 +319,10 @@ const state = {
     ]
 };
 
-// Web Audio API Sound Effects Synthesizer (No external audio files needed)
+// ==========================================
+// 3. AUDIO SYNTHESIS
+// ==========================================
+
 let audioCtx = null;
 
 function initAudio() {
@@ -120,7 +395,10 @@ function playSound(type) {
     }
 }
 
-// Toast Notifications
+// ==========================================
+// 4. TOAST NOTIFICATIONS
+// ==========================================
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -150,58 +428,10 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Tab Switching
-function setupTabs() {
-    const tabButtons = document.querySelectorAll('.nav-tab');
-    const tabContents = document.querySelectorAll('.tab-content');
+// ==========================================
+// 5. REACTIVE CALCULATION & DOM UPDATES
+// ==========================================
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetTab = btn.getAttribute('data-tab');
-            playSound('click');
-
-            tabButtons.forEach(b => {
-                b.classList.remove('active-tab', 'text-white');
-                b.classList.add('text-slate-400');
-            });
-            btn.classList.add('active-tab', 'text-white');
-            btn.classList.remove('text-slate-400');
-
-            tabContents.forEach(c => {
-                if (c.id === `tab-${targetTab}`) {
-                    c.classList.remove('hidden');
-                    c.classList.add('block');
-                } else {
-                    c.classList.remove('block');
-                    c.classList.add('hidden');
-                }
-            });
-
-            if (targetTab === 'reverse') {
-                updateReverseCalculator();
-            } else if (targetTab === 'village') {
-                renderVillageDashboard();
-            }
-
-            if (window.lucide) window.lucide.createIcons();
-        });
-    });
-}
-
-// Live Header Clock
-function setupLiveClock() {
-    const clockEl = document.getElementById('headerLiveClock');
-    if (!clockEl) return;
-
-    function tick() {
-        const now = new Date();
-        clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-    tick();
-    setInterval(tick, 1000);
-}
-
-// Calculation Engine Trigger & DOM Updates
 function updateSingleCalculator() {
     const totalUpgradeSeconds = (state.days * 86400) + (state.hours * 3600) + (state.minutes * 60) + state.seconds;
     
@@ -235,7 +465,7 @@ function updateSingleCalculator() {
 
     state.lastCalcResult = calcResult;
 
-    // Update Hero Completion Time
+    // Update Hero Completion Date/Time
     const completionEl = document.getElementById('resultCompletionDateTime');
     if (completionEl) {
         completionEl.textContent = formatCompletionDateTime(calcResult.completionDate);
@@ -263,7 +493,7 @@ function updateSingleCalculator() {
         }
     }
 
-    // 3 Stat Cards
+    // 3 Stat Metric Cards
     const realTimeEl = document.getElementById('resultRealTime');
     const origTimeEl = document.getElementById('resultOriginalTime');
     const timeSavedEl = document.getElementById('resultTimeSaved');
@@ -289,7 +519,7 @@ function updateSingleCalculator() {
         }
     }
 
-    // Timeline Progress Bar
+    // Visual Timeline Progress Bar
     const boostBar = document.getElementById('timelineBoostBar');
     const normalBar = document.getElementById('timelineNormalBar');
     const boostText = document.getElementById('timelineBoostText');
@@ -332,12 +562,12 @@ function updateSingleCalculator() {
 
         let explanationHtml = `
             <p>For your <strong class="text-white">${formattedTotal}</strong> upgrade using ${state.potionCount} <strong class="text-amber-400">${potionName} (${multiplier}x)</strong>:</p>
-            <p>• In ${totalBoostHours} real hour(s) of boost duration, this potion can complete up to <strong class="text-cyan-300">${boostProgressCapacityHours} hours</strong> of upgrade progress.</p>
+            <p>• In ${totalBoostHours} real hour(s) of boost duration, this potion setup covers up to <strong class="text-cyan-300">${boostProgressCapacityHours} hours</strong> of upgrade progress.</p>
         `;
 
         if (calcResult.finishedDuringBoost) {
             explanationHtml += `
-                <p>• Since your upgrade requires ${formattedTotal} (which is within the ${boostProgressCapacityHours}h limit), it runs at ${multiplier}x speed the entire time!</p>
+                <p>• Since your upgrade requires ${formattedTotal} (within the ${boostProgressCapacityHours}h capacity), it runs at ${multiplier}x speed the entire time!</p>
                 <p>• Real-world time: <strong class="text-emerald-400 font-bold">${formattedReal}</strong>.</p>
                 <p>• You save <strong class="text-emerald-300 font-bold">${formattedSaved}</strong>, and you still have <strong class="text-cyan-400 font-bold">${formattedLeftover}</strong> of active ${multiplier}x boost left over for whatever you upgrade next!</p>
             `;
@@ -352,12 +582,69 @@ function updateSingleCalculator() {
         explanationEl.innerHTML = explanationHtml;
     }
 
+    // If countdown timer is running, update its target timestamp dynamically
+    if (state.activeCountdownInterval) {
+        state.countdownTargetTimestamp = Date.now() + Math.round(calcResult.realTimeElapsedSeconds * 1000);
+    }
+
     if (window.lucide) {
         window.lucide.createIcons();
     }
 }
 
-// Setup Presets
+// ==========================================
+// 6. SETUP FUNCTIONS & EVENT LISTENERS
+// ==========================================
+
+function setupLiveClock() {
+    const clockEl = document.getElementById('headerLiveClock');
+    if (!clockEl) return;
+
+    function tick() {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    tick();
+    setInterval(tick, 1000);
+}
+
+function setupTabs() {
+    const tabButtons = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            playSound('click');
+
+            tabButtons.forEach(b => {
+                b.classList.remove('active-tab', 'text-white');
+                b.classList.add('text-slate-400');
+            });
+            btn.classList.add('active-tab', 'text-white');
+            btn.classList.remove('text-slate-400');
+
+            tabContents.forEach(c => {
+                if (c.id === `tab-${targetTab}`) {
+                    c.classList.remove('hidden');
+                    c.classList.add('block');
+                } else {
+                    c.classList.remove('block');
+                    c.classList.add('hidden');
+                }
+            });
+
+            if (targetTab === 'reverse') {
+                updateReverseCalculator();
+            } else if (targetTab === 'village') {
+                renderVillageDashboard();
+            }
+
+            if (window.lucide) window.lucide.createIcons();
+        });
+    });
+}
+
 function setupPresets() {
     const presetButtons = document.querySelectorAll('[data-preset]');
     presetButtons.forEach(btn => {
@@ -412,7 +699,6 @@ function syncInputsFromState() {
     if (inputS) inputS.value = state.seconds;
 }
 
-// Setup Potion Selection Buttons
 function setupPotionSelection() {
     const potionButtons = document.querySelectorAll('.potion-btn');
     const customControls = document.getElementById('customControls');
@@ -422,7 +708,6 @@ function setupPotionSelection() {
     potionButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const potionKey = btn.getAttribute('data-potion');
-            if (potionKey === state.selectedPotionKey) return;
 
             playSound('potion_switch');
             state.selectedPotionKey = potionKey;
@@ -456,6 +741,10 @@ function setupPotionSelection() {
     if (customMultInput) {
         customMultInput.addEventListener('input', (e) => {
             state.customMultiplier = parseFloat(e.target.value) || 1;
+            const multiplierBadge = document.getElementById('activePotionMultiplierBadge');
+            if (multiplierBadge && state.selectedPotionKey === 'custom') {
+                multiplierBadge.textContent = `${state.customMultiplier}x Custom`;
+            }
             updateSingleCalculator();
         });
     }
@@ -468,7 +757,6 @@ function setupPotionSelection() {
     }
 }
 
-// Setup Upgrade Time Number Inputs
 function setupInputs() {
     const inputD = document.getElementById('inputDays');
     const inputH = document.getElementById('inputHours');
@@ -488,6 +776,7 @@ function setupInputs() {
         if (input) {
             input.addEventListener('input', updateFromInputs);
             input.addEventListener('change', updateFromInputs);
+            input.addEventListener('keyup', updateFromInputs);
         }
     });
 
@@ -504,14 +793,13 @@ function setupInputs() {
         });
     }
 
-    // Potion Count Stepper
     const potionMinus = document.getElementById('potionMinusBtn');
     const potionPlus = document.getElementById('potionPlusBtn');
     const potionInput = document.getElementById('inputPotionCount');
     const potionLabel = document.getElementById('potionTotalBoostLabel');
 
     const updatePotionCount = (newCount) => {
-        state.potionCount = Math.max(1, Math.min(50, newCount));
+        state.potionCount = Math.max(1, Math.min(100, newCount));
         if (potionInput) potionInput.value = state.potionCount;
         
         const mult = state.selectedPotionKey === 'research' ? 24 : 10;
@@ -539,9 +827,11 @@ function setupInputs() {
         potionInput.addEventListener('input', (e) => {
             updatePotionCount(parseInt(e.target.value) || 1);
         });
+        potionInput.addEventListener('change', (e) => {
+            updatePotionCount(parseInt(e.target.value) || 1);
+        });
     }
 
-    // Ongoing Potion Checkbox
     const toggleOngoing = document.getElementById('toggleOngoingPotion');
     const ongoingInputs = document.getElementById('ongoingPotionInputs');
     const activeMinutesInput = document.getElementById('inputActiveMinutes');
@@ -562,13 +852,14 @@ function setupInputs() {
     }
 
     if (activeMinutesInput) {
-        activeMinutesInput.addEventListener('input', (e) => {
+        const updateActiveMins = (e) => {
             state.activeMinutesRemaining = Math.max(0, parseInt(e.target.value) || 0);
             updateSingleCalculator();
-        });
+        };
+        activeMinutesInput.addEventListener('input', updateActiveMins);
+        activeMinutesInput.addEventListener('change', updateActiveMins);
     }
 
-    // Future Start Time Checkbox
     const toggleCustomStart = document.getElementById('toggleCustomStartTime');
     const customStartInputs = document.getElementById('customStartTimeInputs');
     const customStartTimeInput = document.getElementById('inputCustomStartTime');
@@ -602,7 +893,6 @@ function setupInputs() {
     }
 }
 
-// Copy Calculation to Clipboard
 function setupCopyButton() {
     const copyBtn = document.getElementById('copyResultBtn');
     const copyBtnText = document.getElementById('copyBtnText');
@@ -640,7 +930,6 @@ function setupCopyButton() {
     });
 }
 
-// Live Countdown Timer
 function setupCountdownTimer() {
     const startBtn = document.getElementById('startCountdownBtn');
     const stopBtn = document.getElementById('stopCountdownBtn');
@@ -652,6 +941,10 @@ function setupCountdownTimer() {
 
     startBtn.addEventListener('click', () => {
         playSound('click');
+        
+        // Ensure fresh calculation
+        updateSingleCalculator();
+        
         const calc = state.lastCalcResult;
         if (!calc || calc.upgradeSeconds <= 0) {
             showToast('Please enter an upgrade time first!', 'warn');
@@ -667,6 +960,7 @@ function setupCountdownTimer() {
         countdownBtnText.textContent = 'Timer Running';
         startBtn.classList.add('opacity-75');
 
+        countdownCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         showToast('Live upgrade countdown started!', 'success');
 
         const updateTick = () => {
@@ -685,12 +979,17 @@ function setupCountdownTimer() {
             }
 
             const totalSec = Math.floor(diffMs / 1000);
-            const h = Math.floor(totalSec / 3600);
+            const d = Math.floor(totalSec / 86400);
+            const h = Math.floor((totalSec % 86400) / 3600);
             const m = Math.floor((totalSec % 3600) / 60);
             const s = totalSec % 60;
 
             const pad = (num) => String(num).padStart(2, '0');
-            tickingClock.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+            if (d > 0) {
+                tickingClock.textContent = `${d}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+            } else {
+                tickingClock.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+            }
         };
 
         updateTick();
@@ -712,7 +1011,6 @@ function setupCountdownTimer() {
     }
 }
 
-// TAB 2: REVERSE CALCULATOR ("HOW MANY POTIONS DO I NEED?")
 function updateReverseCalculator() {
     const potionType = document.getElementById('reversePotionType')?.value || 'builder';
     const days = parseInt(document.getElementById('reverseDays')?.value) || 0;
@@ -787,7 +1085,6 @@ function setupReverseCalculatorListeners() {
     });
 }
 
-// TAB 3: VILLAGE MULTI-BUILDER DASHBOARD
 function renderVillageDashboard() {
     const grid = document.getElementById('villageBuildersGrid');
     const totalSavedText = document.getElementById('villageTotalSavedText');
@@ -802,7 +1099,7 @@ function renderVillageDashboard() {
     let totalCombinedSecondsSaved = 0;
     let cardsHtml = '';
 
-    state.villageSlots.forEach((slot, index) => {
+    state.villageSlots.forEach((slot) => {
         const totalSlotSeconds = (slot.days * 86400) + (slot.hours * 3600) + (slot.mins * 60);
         const multiplier = slot.type === 'lab' || slot.type === 'pet' ? 24 : 10;
         const potionsToApply = state.villagePotionCount;
@@ -926,7 +1223,6 @@ function setupVillageListeners() {
     }
 }
 
-// Sound Toggle Setup
 function setupSoundToggle() {
     const soundBtn = document.getElementById('soundToggleBtn');
     const soundIcon = document.getElementById('soundIcon');
@@ -950,22 +1246,34 @@ function setupSoundToggle() {
     });
 }
 
-// App Initialization
-document.addEventListener('DOMContentLoaded', () => {
-    setupTabs();
-    setupLiveClock();
-    setupPotionSelection();
-    setupPresets();
-    setupInputs();
-    setupCopyButton();
-    setupCountdownTimer();
-    setupReverseCalculatorListeners();
-    setupVillageListeners();
-    setupSoundToggle();
+// ==========================================
+// 7. INITIALIZATION (SAFE ACROSS ALL BROWSERS)
+// ==========================================
 
-    // Initial calculation run
-    updateSingleCalculator();
+function initApp() {
+    try {
+        setupTabs();
+        setupLiveClock();
+        setupPotionSelection();
+        setupPresets();
+        setupInputs();
+        setupCopyButton();
+        setupCountdownTimer();
+        setupReverseCalculatorListeners();
+        setupVillageListeners();
+        setupSoundToggle();
 
-    // Initial reverse calculator update
-    updateReverseCalculator();
-});
+        // Run initial calculations right away
+        updateSingleCalculator();
+        updateReverseCalculator();
+    } catch (err) {
+        console.error('Initialization error in initApp:', err);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    // DOM is already parsed (or script loaded asynchronously/cached)
+    initApp();
+}
