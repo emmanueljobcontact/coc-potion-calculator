@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0b0f17" />
+    </radialGradient>
+    <linearGradient id="potionLiquid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGlow)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="url(#goldRim)" stroke-width="8" opacity="0.6" />
+
+  <!-- Potion Vial Cork / Cap -->
+  <polygon points="216,90 296,90 286,130 226,130" fill="#d97706" stroke="#f59e0b" stroke-width="4" rx="6" />
+  <ellipse cx="256" cy="90" rx="40" ry="12" fill="#fbbf24" stroke="#f59e0b" stroke-width="4" />
+
+  <!-- Bottle Neck -->
+  <rect x="232" y="130" width="48" height="50" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="6" />
+
+  <!-- Bottle Body Flask -->
+  <path d="M 232,180 L 140,360 A 60,60 0 0,0 190,440 L 322,440 A 60,60 0 0,0 372,360 L 280,180 Z" 
+        fill="rgba(15, 23, 42, 0.7)" stroke="rgba(255,255,255,0.6)" stroke-width="8" stroke-linejoin="round" />
+
+  <!-- Liquid inside -->
+  <path d="M 165,340 Q 210,325 256,340 T 347,340 L 358,365 A 48,48 0 0,1 320,424 L 192,424 A 48,48 0 0,1 154,365 Z" 
+        fill="url(#potionLiquid)" filter="url(#glow)" />
+
+  <!-- Bubbles -->
+  <circle cx="230" cy="380" r="10" fill="#e0f2fe" opacity="0.8" />
+  <circle cx="280" cy="365" r="7" fill="#e0f2fe" opacity="0.8" />
+  <circle cx="250" cy="400" r="5" fill="#e0f2fe" opacity="0.6" />
+
+  <!-- Lightning Bolt (10x Boost emblem) -->
+  <polygon points="266,220 236,290 262,290 246,350 284,276 258,276" 
+           fill="#fbbf24" stroke="#b45309" stroke-width="3" filter="url(#glow)" />
+
+  <!-- Glass Highlight -->
+  <path d="M 160,350 L 236,200" stroke="rgba(255,255,255,0.4)" stroke-width="8" stroke-linecap="round" />
+</svg>

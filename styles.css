@@ -1,0 +1,237 @@
+/* Clash of Clans Potion Calculator - Custom Styles & Game UI */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Lilita+One&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --coc-bg-dark: #0b0f17;
+    --coc-card-bg: rgba(22, 30, 46, 0.75);
+    --coc-card-border: rgba(255, 255, 255, 0.08);
+    --coc-gold: #f59e0b;
+    --coc-gold-bright: #fbbf24;
+    --coc-elixir: #d946ef;
+    --coc-dark-elixir: #9333ea;
+    --coc-builder-blue: #3b82f6;
+    --coc-research-cyan: #06b6d4;
+    --coc-pet-purple: #a855f7;
+    --coc-gem-green: #10b981;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--coc-bg-dark);
+    color: #e2e8f0;
+    min-height: 100vh;
+    background-image: 
+        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 25%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(217, 70, 239, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
+    background-attachment: fixed;
+}
+
+.font-coc {
+    font-family: 'Lilita One', 'Cinzel', cursive, sans-serif;
+    letter-spacing: 0.03em;
+}
+
+.font-gaming {
+    font-family: 'Rajdhani', 'Cinzel', sans-serif;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+/* Glassmorphism Card Style */
+.coc-glass {
+    background: rgba(20, 28, 45, 0.78);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+.coc-card-highlight {
+    position: relative;
+    overflow: hidden;
+}
+
+.coc-card-highlight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #3b82f6, #06b6d4, #d946ef);
+}
+
+/* Potion Selector Cards */
+.potion-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.potion-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.potion-btn.active-potion {
+    border-color: var(--active-color, #3b82f6);
+    box-shadow: 0 0 20px -3px var(--active-glow, rgba(59, 130, 246, 0.5)), inset 0 0 15px -3px var(--active-glow, rgba(59, 130, 246, 0.3));
+    transform: translateY(-2px) scale(1.02);
+}
+
+.potion-btn.active-potion::after {
+    content: 'ACTIVE';
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    background: var(--active-color, #3b82f6);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* CoC Glows */
+.glow-builder {
+    box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.35);
+}
+
+.glow-research {
+    box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.35);
+}
+
+.glow-gold {
+    box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.35);
+}
+
+.glow-pet {
+    box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.35);
+}
+
+/* Custom Number Inputs */
+.coc-input {
+    background: rgba(13, 18, 29, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.coc-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+    outline: none;
+}
+
+/* Preset buttons */
+.preset-chip {
+    transition: all 0.15s ease;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.preset-chip:hover {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.preset-chip:active {
+    transform: translateY(0);
+}
+
+/* Tab active style */
+.nav-tab {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.nav-tab.active-tab {
+    color: #fff;
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(245, 158, 11, 0.6);
+}
+
+.nav-tab.active-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: #f59e0b;
+    border-radius: 9999px;
+    box-shadow: 0 0 10px #f59e0b;
+}
+
+/* Shimmer animation for boosted completion */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.shimmer-text {
+    background: linear-gradient(90deg, #fbbf24 0%, #ffffff 50%, #fbbf24 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+}
+
+/* Pulse animation for potion bottle icon */
+@keyframes potionPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4)); }
+    50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.8)); }
+}
+
+.pulse-potion {
+    animation: potionPulse 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0b0f17;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Gold button gradient */
+.btn-gold {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border: 1px solid #fbbf24;
+    color: #111827;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-gold:hover {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    box-shadow: 0 6px 20px 0 rgba(245, 158, 11, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-gold:active {
+    transform: translateY(1px);
+}

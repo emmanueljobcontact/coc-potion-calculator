@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clash of Clans Potion Calculator | 10x Builder & 24x Research Boosts</title>
+    <meta name="description" content="Calculate exact completion times and savings for Clash of Clans Builder Potions (10x), Research Potions (24x), Pet Potions, and multi-builder village planning.">
+    <meta name="theme-color" content="#0b0f17">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cocDark: '#0b0f17',
+                        cocPanel: '#131b2a',
+                        cocGold: '#f59e0b',
+                        cocGoldLight: '#fbbf24',
+                        cocElixir: '#d946ef',
+                        cocDarkElixir: '#8b5cf6',
+                        cocBuilder: '#3b82f6',
+                        cocResearch: '#06b6d4',
+                        cocPet: '#a855f7',
+                        cocGem: '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-slate-100 antialiased pb-16 selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Top Navigation & Brand Header -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-amber-400 p-[2px] shadow-lg shadow-blue-500/20">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i data-lucide="flask-conical" class="w-5 h-5 text-amber-400 pulse-potion"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-lg sm:text-xl font-coc text-amber-400 tracking-wider">CLASH POTION CALCULATOR</h1>
+                        <span class="hidden sm:inline-flex text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">v2.0 Pro</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Exact 10x Builder & 24x Research Boost Real-Time Engine</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Clock Badge -->
+                <div class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span id="headerLiveClock">--:--:--</span>
+                </div>
+
+                <!-- Sound Toggle -->
+                <button id="soundToggleBtn" title="Toggle Sound Effects" class="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-400 transition">
+                    <i id="soundIcon" data-lucide="volume-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-slate-900/70 border border-slate-800/80 coc-glass max-w-3xl mx-auto">
+            <button data-tab="single" class="nav-tab active-tab flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2">
+                <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                <span>Upgrade Calculator</span>
+            </button>
+            <button data-tab="reverse" class="nav-tab flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 flex items-center justify-center space-x-2">
+                <i data-lucide="target" class="w-4 h-4 text-cyan-400"></i>
+                <span>How Many Potions?</span>
+            </button>
+            <button data-tab="village" class="nav-tab flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 flex items-center justify-center space-x-2">
+                <i data-lucide="castle" class="w-4 h-4 text-purple-400"></i>
+                <span>Village Multi-Builder</span>
+            </button>
+            <button data-tab="guide" class="nav-tab flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 flex items-center justify-center space-x-2">
+                <i data-lucide="book-open" class="w-4 h-4 text-emerald-400"></i>
+                <span>Potion Guide</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: SINGLE UPGRADE CALCULATOR (PRIMARY) -->
+        <!-- ========================================== -->
+        <div id="tab-single" class="tab-content block">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- LEFT COLUMN: CONTROLS & INPUT -->
+                <div class="lg:col-span-6 space-y-6">
+
+                    <!-- Card 1: Potion Selection -->
+                    <div class="coc-glass rounded-2xl p-5 border border-slate-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-sm uppercase tracking-wider font-bold text-amber-400 flex items-center space-x-2">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                <span>1. Select Potion Type</span>
+                            </h2>
+                            <span id="activePotionMultiplierBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40">10x Speed</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="potionGrid">
+                            <!-- Builder Potion -->
+                            <button type="button" data-potion="builder" style="--active-color: #3b82f6; --active-glow: rgba(59, 130, 246, 0.4);" class="potion-btn active-potion rounded-xl p-3.5 bg-slate-900/90 text-left flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                        <i data-lucide="hammer" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-xs font-black text-blue-400">10x</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Builder Potion</h3>
+                                    <p class="text-[11px] text-slate-400">1 hr • 10h work</p>
+                                </div>
+                            </button>
+
+                            <!-- Research Potion -->
+                            <button type="button" data-potion="research" style="--active-color: #06b6d4; --active-glow: rgba(6, 182, 212, 0.4);" class="potion-btn rounded-xl p-3.5 bg-slate-900/90 text-left flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                                        <i data-lucide="flask-conical" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-xs font-black text-cyan-400">24x</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Research Potion</h3>
+                                    <p class="text-[11px] text-slate-400">1 hr • 24h work</p>
+                                </div>
+                            </button>
+
+                            <!-- Pet Potion -->
+                            <button type="button" data-potion="pet" style="--active-color: #a855f7; --active-glow: rgba(168, 85, 247, 0.4);" class="potion-btn rounded-xl p-3.5 bg-slate-900/90 text-left flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                                        <i data-lucide="paw-print" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-xs font-black text-purple-400">24x</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Pet Potion</h3>
+                                    <p class="text-[11px] text-slate-400">1 hr • 24h work</p>
+                                </div>
+                            </button>
+
+                            <!-- Clock Tower Potion -->
+                            <button type="button" data-potion="clock_tower" style="--active-color: #eab308; --active-glow: rgba(234, 179, 8, 0.4);" class="potion-btn rounded-xl p-3.5 bg-slate-900/90 text-left flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
+                                        <i data-lucide="clock" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-xs font-black text-yellow-400">10x</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Clock Tower</h3>
+                                    <p class="text-[11px] text-slate-400">30m • 5h work</p>
+                                </div>
+                            </button>
+
+                            <!-- Custom Booster -->
+                            <button type="button" data-potion="custom" style="--active-color: #ec4899; --active-glow: rgba(236, 72, 153, 0.4);" class="potion-btn rounded-xl p-3.5 bg-slate-900/90 text-left flex flex-col justify-between col-span-2 sm:col-span-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center">
+                                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="text-xs font-black text-pink-400">CUSTOM</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-100">Custom Speed Multiplier</h3>
+                                    <p class="text-[11px] text-slate-400">Set custom multiplier & duration</p>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Custom Controls (Hidden by default) -->
+                        <div id="customControls" class="hidden mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Speed Multiplier (e.g. 10x)</label>
+                                <input type="number" id="customMultiplier" min="1" max="100" value="10" class="coc-input w-full py-2 px-3 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Potion Duration (Minutes)</label>
+                                <input type="number" id="customDurationMins" min="1" max="1440" value="60" class="coc-input w-full py-2 px-3 rounded-lg text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Potion Info Note -->
+                        <div id="potionNote" class="mt-4 p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-start space-x-2.5 text-xs text-blue-200">
+                            <i data-lucide="info" class="w-4 h-4 text-blue-400 mt-0.5 shrink-0"></i>
+                            <span id="potionDescriptionText">Builder Potion speeds up building construction & hero upgrades by 10x for 1 hour. In 1 hour, your builder completes 10 hours of work!</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Remaining Upgrade Duration Input -->
+                    <div class="coc-glass rounded-2xl p-5 border border-slate-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-sm uppercase tracking-wider font-bold text-amber-400 flex items-center space-x-2">
+                                <i data-lucide="timer" class="w-4 h-4"></i>
+                                <span>2. Remaining Upgrade Time</span>
+                            </h2>
+                            <button id="clearUpgradeBtn" class="text-xs text-slate-400 hover:text-rose-400 flex items-center space-x-1 transition">
+                                <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+
+                        <!-- Days, Hours, Mins, Secs Spinners -->
+                        <div class="grid grid-cols-4 gap-2.5">
+                            <div class="text-center">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Days</label>
+                                <input type="number" id="inputDays" min="0" max="30" value="0" class="coc-input w-full py-3 px-2 text-center text-xl font-gaming rounded-xl">
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hours</label>
+                                <input type="number" id="inputHours" min="0" max="23" value="4" class="coc-input w-full py-3 px-2 text-center text-xl font-gaming rounded-xl text-amber-300">
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mins</label>
+                                <input type="number" id="inputMins" min="0" max="59" value="20" class="coc-input w-full py-3 px-2 text-center text-xl font-gaming rounded-xl text-cyan-300">
+                            </div>
+                            <div class="text-center">
+                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Secs</label>
+                                <input type="number" id="inputSecs" min="0" max="59" value="0" class="coc-input w-full py-3 px-2 text-center text-xl font-gaming rounded-xl">
+                            </div>
+                        </div>
+
+                        <!-- Quick Presets -->
+                        <div class="mt-4">
+                            <div class="text-xs font-semibold text-slate-400 mb-2 flex items-center justify-between">
+                                <span>Quick Presets:</span>
+                                <span class="text-[11px] text-amber-400 font-normal">Click to load common times</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" data-preset="4h20m" class="preset-chip py-1.5 px-3 rounded-lg text-xs font-bold text-amber-400 border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20">
+                                    ⭐ 4h 20m (Example)
+                                </button>
+                                <button type="button" data-preset="30m" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">30m</button>
+                                <button type="button" data-preset="1h" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">1h</button>
+                                <button type="button" data-preset="2h" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">2h</button>
+                                <button type="button" data-preset="8h" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">8h</button>
+                                <button type="button" data-preset="12h" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">12h</button>
+                                <button type="button" data-preset="1d" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">1d</button>
+                                <button type="button" data-preset="2d" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">2d</button>
+                                <button type="button" data-preset="5d" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">5d</button>
+                                <button type="button" data-preset="7d" class="preset-chip py-1.5 px-2.5 rounded-lg text-xs font-medium text-slate-300">7d</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Potion Quantity & Scheduling -->
+                    <div class="coc-glass rounded-2xl p-5 border border-slate-800">
+                        <h2 class="text-sm uppercase tracking-wider font-bold text-amber-400 mb-4 flex items-center space-x-2">
+                            <i data-lucide="layers" class="w-4 h-4"></i>
+                            <span>3. Potions & Start Time</span>
+                        </h2>
+
+                        <!-- Number of Potions Stepper -->
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 mb-4">
+                            <div>
+                                <span class="text-sm font-bold text-slate-100 block">Number of Potions</span>
+                                <span class="text-xs text-slate-400" id="potionTotalBoostLabel">1 Potion = 1 hr boost (10h progress)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="potionMinusBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-lg transition">-</button>
+                                <input type="number" id="inputPotionCount" min="1" max="20" value="1" class="coc-input w-14 py-1 text-center font-bold rounded-lg text-amber-300 text-base">
+                                <button type="button" id="potionPlusBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-lg transition">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Advanced: Active Potion & Start Schedule Toggle -->
+                        <div class="space-y-3 pt-2 border-t border-slate-800/80">
+                            <!-- Ongoing potion toggle -->
+                            <div class="flex items-center justify-between">
+                                <label for="toggleOngoingPotion" class="text-xs font-medium text-slate-300 cursor-pointer flex items-center space-x-2">
+                                    <input type="checkbox" id="toggleOngoingPotion" class="rounded bg-slate-800 border-slate-700 text-blue-500 focus:ring-0">
+                                    <span>A potion is already active right now</span>
+                                </label>
+                            </div>
+
+                            <div id="ongoingPotionInputs" class="hidden pl-6 py-2">
+                                <label class="text-xs text-slate-400 block mb-1">Active boost minutes remaining:</label>
+                                <div class="flex items-center space-x-2">
+                                    <input type="number" id="inputActiveMinutes" min="0" max="60" value="30" class="coc-input w-24 py-1.5 px-3 rounded-lg text-sm">
+                                    <span class="text-xs text-slate-400">minutes left</span>
+                                </div>
+                            </div>
+
+                            <!-- Schedule start time toggle -->
+                            <div class="flex items-center justify-between">
+                                <label for="toggleCustomStartTime" class="text-xs font-medium text-slate-300 cursor-pointer flex items-center space-x-2">
+                                    <input type="checkbox" id="toggleCustomStartTime" class="rounded bg-slate-800 border-slate-700 text-blue-500 focus:ring-0">
+                                    <span>Plan for a future start time</span>
+                                </label>
+                            </div>
+
+                            <div id="customStartTimeInputs" class="hidden pl-6 py-2">
+                                <label class="text-xs text-slate-400 block mb-1">Potion activation date & time:</label>
+                                <input type="datetime-local" id="inputCustomStartTime" class="coc-input py-1.5 px-3 rounded-lg text-xs w-full max-w-xs">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: HERO RESULTS & VISUAL TIMELINE -->
+                <div class="lg:col-span-6 space-y-6">
+
+                    <!-- HERO COMPLETION BANNER CARD -->
+                    <div class="coc-glass rounded-2xl p-6 border-2 border-amber-500/40 coc-card-highlight shadow-2xl shadow-amber-500/10">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-black tracking-widest uppercase text-amber-400 flex items-center space-x-1.5">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                                <span>CALCULATED COMPLETION</span>
+                            </span>
+                            <span id="boostStatusBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center space-x-1">
+                                <i data-lucide="zap" class="w-3 h-3"></i>
+                                <span>Finishes During Boost!</span>
+                            </span>
+                        </div>
+
+                        <!-- Big Time Display -->
+                        <div class="my-4">
+                            <div class="text-xs text-slate-400 font-medium">Upgrade will be 100% completed at:</div>
+                            <div id="resultCompletionDateTime" class="text-2xl sm:text-3xl md:text-4xl font-coc text-white tracking-wide mt-1 shimmer-text">
+                                Today at --:--:--
+                            </div>
+                            <div class="text-sm font-semibold text-slate-300 mt-1 flex items-center space-x-1.5">
+                                <i data-lucide="hourglass" class="w-4 h-4 text-cyan-400"></i>
+                                <span id="resultRelativeTime">in 26 minutes</span>
+                            </div>
+                        </div>
+
+                        <!-- 3 Stat Metrics Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+                            <!-- Real Time Wait -->
+                            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                                <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center space-x-1">
+                                    <i data-lucide="clock-4" class="w-3.5 h-3.5 text-blue-400"></i>
+                                    <span>Real Wait Time</span>
+                                </div>
+                                <div id="resultRealTime" class="text-xl font-gaming text-blue-300">26m 0s</div>
+                                <div class="text-[11px] text-slate-500 mt-0.5 line-through" id="resultOriginalTime">was 4h 20m</div>
+                            </div>
+
+                            <!-- Time Saved -->
+                            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/20 bg-emerald-950/20">
+                                <div class="text-[11px] text-emerald-400 font-bold uppercase tracking-wider mb-1 flex items-center space-x-1">
+                                    <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                    <span>Time Saved</span>
+                                </div>
+                                <div id="resultTimeSaved" class="text-xl font-gaming text-emerald-300">3h 54m</div>
+                                <div class="text-[11px] text-emerald-400/80 mt-0.5" id="resultEfficiencyPercent">90% faster</div>
+                            </div>
+
+                            <!-- Leftover Boost -->
+                            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                                <div class="text-[11px] text-cyan-400 font-bold uppercase tracking-wider mb-1 flex items-center space-x-1">
+                                    <i data-lucide="battery-charging" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    <span>Boost Leftover</span>
+                                </div>
+                                <div id="resultLeftoverBoost" class="text-xl font-gaming text-cyan-300">34m 0s</div>
+                                <div class="text-[11px] text-slate-400 mt-0.5" id="resultLeftoverSubtext">for next upgrade</div>
+                            </div>
+                        </div>
+
+                        <!-- Visual Progress Breakdown Bar -->
+                        <div class="mt-6 pt-5 border-t border-slate-800">
+                            <div class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
+                                <span class="flex items-center space-x-1">
+                                    <i data-lucide="activity" class="w-3.5 h-3.5 text-amber-400"></i>
+                                    <span>Upgrade Timeline Progression</span>
+                                </span>
+                                <span id="timelineSpeedSummary" class="text-amber-400 font-gaming">10x Speed Active</span>
+                            </div>
+
+                            <div class="w-full h-4 rounded-full bg-slate-900 overflow-hidden p-0.5 border border-slate-800 flex">
+                                <div id="timelineBoostBar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500" style="width: 100%;"></div>
+                                <div id="timelineNormalBar" class="h-full bg-slate-700 rounded-r-full transition-all duration-500" style="width: 0%;"></div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>
+                                    <span id="timelineBoostText">Boosted Phase: 26m @ 10x</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5" id="timelineNormalContainer">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
+                                    <span id="timelineNormalText">Normal: 0s @ 1x</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex flex-wrap gap-2.5">
+                            <button id="copyResultBtn" class="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center justify-center space-x-2 transition">
+                                <i data-lucide="copy" class="w-4 h-4 text-amber-400"></i>
+                                <span id="copyBtnText">Copy Calculation</span>
+                            </button>
+
+                            <button id="startCountdownBtn" class="flex-1 py-2.5 px-4 rounded-xl btn-gold text-xs font-bold flex items-center justify-center space-x-2">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                <span id="countdownBtnText">Start Live Timer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE LIVE COUNTDOWN TILE (When user clicks start timer) -->
+                    <div id="activeCountdownCard" class="hidden coc-glass rounded-2xl p-5 border border-emerald-500/30 bg-emerald-950/10">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span>Live Upgrade Countdown</span>
+                            </span>
+                            <button id="stopCountdownBtn" class="text-xs text-rose-400 hover:text-rose-300 font-semibold">Stop</button>
+                        </div>
+
+                        <div class="text-center py-3">
+                            <div id="liveTickingClock" class="text-4xl font-coc text-emerald-400 tracking-wider">00:26:00</div>
+                            <p class="text-xs text-slate-400 mt-1">Keep this tab open. A chime will sound when completed!</p>
+                        </div>
+                    </div>
+
+                    <!-- QUICK EXPLANATION / HOW IT WAS CALCULATED -->
+                    <div class="coc-glass rounded-2xl p-5 border border-slate-800">
+                        <h3 class="text-xs uppercase font-bold text-slate-400 tracking-wider mb-2 flex items-center space-x-1.5">
+                            <i data-lucide="calculator" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Math Breakdown</span>
+                        </h3>
+                        <div id="calculationExplanationText" class="text-xs text-slate-300 leading-relaxed space-y-1.5">
+                            <!-- Populated dynamically -->
+                            <p>For your <strong class="text-white">4h 20m</strong> upgrade with 1 <strong class="text-blue-400">Builder Potion (10x)</strong>:</p>
+                            <p>• In 1 hour, a Builder Potion completes 10 hours of work.</p>
+                            <p>• 4h 20m (260 mins) divided by 10 = <strong class="text-emerald-400">26 minutes</strong> of real-world time.</p>
+                            <p>• You save <strong class="text-amber-400">3h 54m</strong> and retain <strong class="text-cyan-400">34 minutes</strong> of leftover 10x boost for whatever you upgrade next!</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: HOW MANY POTIONS DO I NEED? (REVERSE)   -->
+        <!-- ============================================== -->
+        <div id="tab-reverse" class="tab-content hidden space-y-6">
+            <div class="max-w-4xl mx-auto coc-glass rounded-2xl p-6 border border-slate-800">
+                <div class="flex items-center space-x-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                        <i data-lucide="target" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-coc text-amber-400">HOW MANY POTIONS DO I NEED?</h2>
+                        <p class="text-xs text-slate-400">Find the optimal number of potions to finish an upgrade before War, CWL, or bedtime</p>
+                    </div>
+                </div>
+
+                <!-- Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/80 border border-slate-800 mb-6">
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 block mb-2">Potion Type</label>
+                        <select id="reversePotionType" class="coc-input w-full py-2.5 px-3 rounded-xl text-sm font-semibold">
+                            <option value="builder" selected>Builder Potion (10x Speed, 1 hr)</option>
+                            <option value="research">Research Potion (24x Speed, 1 hr)</option>
+                            <option value="pet">Pet Potion (24x Speed, 1 hr)</option>
+                            <option value="clock_tower">Clock Tower Potion (10x Speed, 30 min)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-300 block mb-2">Upgrade Duration Remaining</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="number" id="reverseDays" min="0" max="30" value="1" placeholder="Days" class="coc-input py-2 px-2 text-center rounded-lg text-sm">
+                            <input type="number" id="reverseHours" min="0" max="23" value="4" placeholder="Hours" class="coc-input py-2 px-2 text-center rounded-lg text-sm">
+                            <input type="number" id="reverseMins" min="0" max="59" value="0" placeholder="Mins" class="coc-input py-2 px-2 text-center rounded-lg text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendation Banner -->
+                <div id="reverseRecommendationBanner" class="p-4 rounded-xl bg-blue-950/40 border border-blue-900/60 mb-6 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold text-blue-300 uppercase tracking-wider">Fastest Completion Recommendation</div>
+                        <div id="reverseRecHeadline" class="text-lg font-coc text-white mt-0.5">Use 3 Builder Potions to finish in 2h 48m!</div>
+                        <div id="reverseRecSubtext" class="text-xs text-slate-400">Total upgrade capacity of 3 potions = 30 hours of work</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-coc text-2xl" id="reverseRecBadge">
+                        3x
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold">
+                                <th class="pb-3 px-3">Potions Used</th>
+                                <th class="pb-3 px-3">Real-World Finish In</th>
+                                <th class="pb-3 px-3">Time Saved</th>
+                                <th class="pb-3 px-3">Status</th>
+                                <th class="pb-3 px-3">Boost Leftover</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reverseTableBody" class="divide-y divide-slate-800/60">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: VILLAGE MULTI-BUILDER MANAGER           -->
+        <!-- ============================================== -->
+        <div id="tab-village" class="tab-content hidden space-y-6">
+            <div class="max-w-5xl mx-auto coc-glass rounded-2xl p-6 border border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                            <i data-lucide="castle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-coc text-amber-400">VILLAGE MULTI-BUILDER PLANNER</h2>
+                            <p class="text-xs text-slate-400">1 Builder Potion boosts ALL active builders simultaneously. Track your entire village!</p>
+                        </div>
+                    </div>
+
+                    <!-- Village Potions Controller -->
+                    <div class="flex items-center space-x-2 bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                        <span class="text-xs font-bold text-slate-300">Potions to Drink:</span>
+                        <button id="villagePotionMinus" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">-</button>
+                        <span id="villagePotionCountDisplay" class="font-bold text-amber-400 px-2 text-sm">1</span>
+                        <button id="villagePotionPlus" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">+</button>
+                    </div>
+                </div>
+
+                <!-- Total Village Value Alert -->
+                <div class="p-4 rounded-xl bg-gradient-to-r from-blue-950/60 via-purple-950/60 to-slate-900 border border-blue-800/40 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                        <div class="text-xs font-bold text-blue-300 uppercase tracking-wider">Total Combined Village Time Saved</div>
+                        <div id="villageTotalSavedText" class="text-xl sm:text-2xl font-coc text-amber-400 mt-0.5">54 Hours Total Builder Time Saved!</div>
+                        <div class="text-xs text-slate-400">With 6 active builders, 1 potion shaves off 9 hours per builder!</div>
+                    </div>
+                    <button id="resetVillageDefaultsBtn" class="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition">
+                        Reset Defaults
+                    </button>
+                </div>
+
+                <!-- Builders Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="villageBuildersGrid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: POTION GUIDE & FAQ                      -->
+        <!-- ============================================== -->
+        <div id="tab-guide" class="tab-content hidden space-y-6">
+            <div class="max-w-4xl mx-auto space-y-6">
+
+                <!-- Hero Guide Banner -->
+                <div class="coc-glass rounded-2xl p-6 border border-slate-800">
+                    <h2 class="text-xl font-coc text-amber-400 mb-2">CLASH OF CLANS POTION MECHANICS & VALUE GUIDE</h2>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Clash of Clans potions are time multipliers. Instead of advancing an upgrade by a static number of hours instantly, they accelerate the in-game clock for 1 hour.
+                    </p>
+                </div>
+
+                <!-- Builder vs Research Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Builder Potion -->
+                    <div class="coc-glass rounded-2xl p-5 border border-blue-900/40">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                <i data-lucide="hammer" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Builder Potion (10x Speed)</h3>
+                                <p class="text-xs text-blue-400">Duration: 1 Hour (Real Time)</p>
+                            </div>
+                        </div>
+
+                        <ul class="text-xs text-slate-300 space-y-2.5">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>How it works:</strong> In 1 real hour, builders complete <strong>10 hours</strong> worth of work.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Net Time Saved:</strong> 10 hours work - 1 hour elapsed = <strong>9 hours saved per builder</strong>.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Affects ALL Builders:</strong> If you have 6 builders active, 1 potion saves <strong>54 hours</strong> of total builder time!</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Leftover Boost:</strong> If an upgrade finishes in 26 minutes, the remaining 34 minutes of 10x boost remains active for your next upgrade!</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Research Potion -->
+                    <div class="coc-glass rounded-2xl p-5 border border-cyan-900/40">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                                <i data-lucide="flask-conical" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Research Potion (24x Speed)</h3>
+                                <p class="text-xs text-cyan-400">Duration: 1 Hour (Real Time)</p>
+                            </div>
+                        </div>
+
+                        <ul class="text-xs text-slate-300 space-y-2.5">
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>How it works:</strong> In 1 real hour, your Laboratory completes <strong>24 hours (1 full day)</strong> of research.</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Net Time Saved:</strong> 24 hours work - 1 hour elapsed = <strong>23 hours saved</strong>!</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Sub-Hour Research:</strong> A 4h 20m lab upgrade finishes in only <strong>10 minutes and 50 seconds</strong>!</span>
+                            </li>
+                            <li class="flex items-start space-x-2">
+                                <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                                <span><strong>Raid Medals:</strong> 3 Research Potions can be bought weekly from the Trader for 600 Raid Medals, saving 69 hours of lab time every week!</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- FAQ / Math Examples -->
+                <div class="coc-glass rounded-2xl p-6 border border-slate-800 space-y-4">
+                    <h3 class="text-base font-bold text-amber-400 flex items-center space-x-2">
+                        <i data-lucide="help-circle" class="w-4 h-4"></i>
+                        <span>Frequently Asked Questions & Formula Details</span>
+                    </h3>
+
+                    <div class="space-y-3 text-xs text-slate-300">
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <h4 class="font-bold text-white mb-1">What happens if my upgrade has 4 hours and 20 minutes left and I drink a Builder Potion?</h4>
+                            <p>Because the Builder Potion boosts at 10x speed, 4 hours and 20 minutes (260 minutes) is finished in exactly <strong>260 / 10 = 26 minutes</strong> of real-world time. The remaining <strong>34 minutes</strong> of the potion will continue to boost any other ongoing upgrades or whatever you start next!</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <h4 class="font-bold text-white mb-1">What happens if I use a Research Potion on a 4 hours and 20 minutes lab upgrade?</h4>
+                            <p>With a 24x multiplier, 4 hours 20 minutes (15,600 seconds) is finished in <strong>15,600 / 24 = 650 seconds (10 minutes and 50 seconds)</strong>. You have <strong>49 minutes and 10 seconds</strong> of 24x boost left over!</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                            <h4 class="font-bold text-white mb-1">Can I stack multiple potions?</h4>
+                            <p>Yes! In Clash of Clans, drinking 2 Builder Potions extends the duration to 2 hours (20 hours of progress). Drinking 3 extends to 3 hours (30 hours of progress). The speed multiplier remains 10x, but the duration stacks consecutively.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Scripts -->
+    <script src="calculator.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide icons on initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch((err) => {
+                    console.log('SW registration note:', err);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
