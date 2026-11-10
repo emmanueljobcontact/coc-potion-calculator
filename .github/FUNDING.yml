@@ -1,0 +1,6 @@
+# GitHub Repository Funding Configuration
+# Enables the native pink "💖 Sponsor" button on https://github.com/emmanueljobcontact/coc-potion-calculator
+
+ko_fi: emmanueljob
+buy_me_a_coffee: emmanueljob
+custom: ['https://paypal.me', 'https://buymeacoffee.com']
